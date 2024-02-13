@@ -50,12 +50,24 @@ var (
 func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	log.Info("Reconciling fight!")
+
 	var fight kubemonv1.Fight
 	if err := r.Get(ctx, req.NamespacedName, &fight); err != nil {
-		log.Error(err, "Unable to fetch Fight")
+		if client.IgnoreNotFound(err) != nil {
+			log.Error(err, "Unable to fetch Fight")
+		}
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	log.Info("Got Fight object")
+
+	if fight.DeletionTimestamp != nil {
+		log.V(1).Info("Fight is marked for deletion, stop reconciling")
+		return ctrl.Result{Requeue: false}, nil
+	}
+	log.Info("Fight not marked for deletion")
 
 	fightNamespace := fight.Namespace
 
@@ -102,21 +114,6 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	if *mon1.Status.HP == 0 {
 		mon2.Status.Level = ptr.To(int32(*mon2.Status.Level + 1))
-		if err := r.Status().Update(ctx, &mon1); err != nil {
-			log.Error(err, "Could not update status of KubeMon")
-
-			return ctrl.Result{}, err
-		}
-
-		if err := r.Delete(ctx, &fight); err != nil {
-			log.Error(err, "Could not delete Fight")
-
-			return ctrl.Result{}, err
-		}
-	}
-
-	if *mon2.Status.HP == 0 {
-		mon1.Status.Level = ptr.To(int32(*mon1.Status.Level + 1))
 		if err := r.Status().Update(ctx, &mon2); err != nil {
 			log.Error(err, "Could not update status of KubeMon")
 
@@ -128,6 +125,25 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 			return ctrl.Result{}, err
 		}
+
+		return ctrl.Result{}, nil
+	}
+
+	if *mon2.Status.HP == 0 {
+		mon1.Status.Level = ptr.To(int32(*mon1.Status.Level + 1))
+		if err := r.Status().Update(ctx, &mon1); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+
+		if err := r.Delete(ctx, &fight); err != nil {
+			log.Error(err, "Could not delete Fight")
+
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
 	}
 
 	if fight.Status.NextMon == 1 {
@@ -161,7 +177,8 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{RequeueAfter: time.Second * 2}, nil
+	log.Info("Got through reconcile! requeuing")
+	return ctrl.Result{RequeueAfter: time.Second * 20}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -72,10 +72,16 @@ func (r *KubeMonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if kubemon.DeletionTimestamp != nil {
+		log.V(1).Info("KubeMon is marked for deletion, stop reconciling")
+
+		return ctrl.Result{Requeue: false}, nil
+	}
+
 	if kubemon.Status.HP == nil {
 		log.V(1).Info("KubeMon does not have any health")
 
-		if err := r.UpdateKubeMonHealth(ctx, &kubemon, 0); err != nil {
+		if err := r.UpdateKubeMonHealth(ctx, &kubemon, 10); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
