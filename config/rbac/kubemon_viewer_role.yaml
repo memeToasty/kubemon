@@ -1,0 +1,27 @@
+# permissions for end users to view kubemons.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: kubemon-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: kubemon
+    app.kubernetes.io/part-of: kubemon
+    app.kubernetes.io/managed-by: kustomize
+  name: kubemon-viewer-role
+rules:
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
+  - kubemons
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
+  - kubemons/status
+  verbs:
+  - get

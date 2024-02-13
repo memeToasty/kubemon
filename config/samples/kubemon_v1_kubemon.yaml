@@ -1,0 +1,14 @@
+apiVersion: kubemon.memetoasty.github.com/v1
+kind: KubeMon
+metadata:
+  labels:
+    app.kubernetes.io/name: kubemon
+    app.kubernetes.io/instance: kubemon-sample
+    app.kubernetes.io/part-of: kubemon
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kubemon
+  name: kubemon-sample
+spec:
+  species: test
+  level: 1
+  owner: tobi

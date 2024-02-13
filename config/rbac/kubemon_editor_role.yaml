@@ -1,0 +1,31 @@
+# permissions for end users to edit kubemons.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: kubemon-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: kubemon
+    app.kubernetes.io/part-of: kubemon
+    app.kubernetes.io/managed-by: kustomize
+  name: kubemon-editor-role
+rules:
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
+  - kubemons
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
+  - kubemons/status
+  verbs:
+  - get
