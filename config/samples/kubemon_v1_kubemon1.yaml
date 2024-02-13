@@ -10,5 +10,5 @@ metadata:
   name: kubemon-sample1
 spec:
   species: test
-  level: 1
+  strength: 1
   owner: tobi

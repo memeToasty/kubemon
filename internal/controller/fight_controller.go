@@ -19,6 +19,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"math"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -99,8 +101,8 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	// Both KubeMons exist
 
 	if *mon1.Status.HP == 0 {
-		mon2.Spec.Level = ptr.To(int32(*mon2.Spec.Level + 1))
-		if err := r.Update(ctx, &mon1); err != nil {
+		mon2.Status.Level = ptr.To(int32(*mon2.Status.Level + 1))
+		if err := r.Status().Update(ctx, &mon1); err != nil {
 			log.Error(err, "Could not update status of KubeMon")
 
 			return ctrl.Result{}, err
@@ -114,8 +116,8 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	if *mon2.Status.HP == 0 {
-		mon1.Spec.Level = ptr.To(int32(*mon1.Spec.Level + 1))
-		if err := r.Update(ctx, &mon2); err != nil {
+		mon1.Status.Level = ptr.To(int32(*mon1.Status.Level + 1))
+		if err := r.Status().Update(ctx, &mon2); err != nil {
 			log.Error(err, "Could not update status of KubeMon")
 
 			return ctrl.Result{}, err
@@ -128,7 +130,38 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 	}
 
-	return ctrl.Result{}, nil
+	if fight.Status.NextMon == 1 {
+		// Mon1 attacks
+		mon2.Status.HP = ptr.To(int32(math.Max(0, float64(*mon2.Status.HP-mon1.Spec.Strength))))
+		if err := r.Status().Update(ctx, &mon2); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+
+	} else {
+		// Mon2 attacks
+		mon1.Status.HP = ptr.To(int32(math.Max(0, float64(*mon1.Status.HP-mon2.Spec.Strength))))
+		if err := r.Status().Update(ctx, &mon1); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+	}
+
+	fight.Status.TurnNumber += 1
+	if fight.Status.NextMon == 1 {
+		fight.Status.NextMon = 2
+	} else {
+		fight.Status.NextMon = 1
+	}
+	if err := r.Status().Update(ctx, &fight); err != nil {
+		log.Error(err, "Could not update status of Fight")
+
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: time.Second * 2}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

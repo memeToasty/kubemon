@@ -29,25 +29,25 @@ type KubeMonSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	Species string `json:"species"`
-	// +kubebuilder:validation:Minimum:1
-	// +kubebuilder:validation:Minimum:99
-	Level *int32 `json:"level"`
-	Owner string `json:"owner,omitempty"`
-	// +kubebuilder:validation:Enum:heal,attack
+	Owner   string `json:"owner,omitempty"`
+	//+kubebuilder:validation:default:1
+	Strength int32 `json:"strength"`
+	//+kubebuilder:validation:Enum:heal,attack
 	Action string `json:"action,omitempty"`
 }
 
 // KubeMonStatus defines the observed state of KubeMon
 type KubeMonStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	HP *int32 `json:"hp,omitempty"`
+	//+kubebuilder:validation:Minimum:1
+	//+kubebuilder:validation:Minimum:99
+	Level *int32 `json:"level,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Species",type="string",JSONPath=".spec.species"
-//+kubebuilder:printcolumn:name="Level",type="integer",JSONPath=".spec.level"
+//+kubebuilder:printcolumn:name="Level",type="integer",JSONPath=".status.level"
 //+kubebuilder:printcolumn:name="HP",type="integer",JSONPath=".status.hp"
 
 // KubeMon is the Schema for the kubemons API

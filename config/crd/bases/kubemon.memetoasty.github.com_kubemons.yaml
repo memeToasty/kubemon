@@ -18,7 +18,7 @@ spec:
     - jsonPath: .spec.species
       name: Species
       type: string
-    - jsonPath: .spec.level
+    - jsonPath: .status.level
       name: Level
       type: integer
     - jsonPath: .status.hp
@@ -51,24 +51,24 @@ spec:
             properties:
               action:
                 type: string
-              level:
-                format: int32
-                type: integer
               owner:
                 type: string
               species:
                 type: string
+              strength:
+                format: int32
+                type: integer
             required:
-            - level
             - species
+            - strength
             type: object
           status:
             description: KubeMonStatus defines the observed state of KubeMon
             properties:
               hp:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
+                format: int32
+                type: integer
+              level:
                 format: int32
                 type: integer
             type: object

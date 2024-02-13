@@ -38,10 +38,22 @@ type KubeMonReconciler struct {
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=kubemons/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=kubemons/finalizers,verbs=update
 
-func (r *KubeMonReconciler) updateKubeMonHealth(ctx context.Context, kubemon *kubemonv1.KubeMon, hp int32) error {
+func (r *KubeMonReconciler) UpdateKubeMonHealth(ctx context.Context, kubemon *kubemonv1.KubeMon, hp int32) error {
 	log := log.FromContext(ctx)
 
 	kubemon.Status.HP = ptr.To(hp)
+	if err := r.Status().Update(ctx, kubemon); err != nil {
+		log.Error(err, "Could not update status of KubeMon")
+
+		return err
+	}
+	return nil
+}
+
+func (r *KubeMonReconciler) UpdateKubeMonLevel(ctx context.Context, kubemon *kubemonv1.KubeMon, level int32) error {
+	log := log.FromContext(ctx)
+
+	kubemon.Status.Level = ptr.To(level)
 	if err := r.Status().Update(ctx, kubemon); err != nil {
 		log.Error(err, "Could not update status of KubeMon")
 
@@ -63,13 +75,21 @@ func (r *KubeMonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if kubemon.Status.HP == nil {
 		log.V(1).Info("KubeMon does not have any health")
 
-		if err := r.updateKubeMonHealth(ctx, &kubemon, 0); err != nil {
+		if err := r.UpdateKubeMonHealth(ctx, &kubemon, 0); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	if kubemon.Status.Level == nil {
+		log.V(1).Info("KubeMon does not have any Level")
+
+		if err := r.UpdateKubeMonLevel(ctx, &kubemon, 1); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
 
 	if kubemon.Spec.Action == "heal" {
-		if err := r.updateKubeMonHealth(ctx, &kubemon, *kubemon.Status.HP+10); err != nil {
+		if err := r.UpdateKubeMonHealth(ctx, &kubemon, *kubemon.Status.HP+10); err != nil {
 			return ctrl.Result{}, err
 		}
 

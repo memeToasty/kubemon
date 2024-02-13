@@ -59,8 +59,16 @@ spec:
             properties:
               lastMessage:
                 type: string
+              nextMon:
+                format: int32
+                type: integer
+              turnNumber:
+                format: int32
+                type: integer
             required:
             - lastMessage
+            - nextMon
+            - turnNumber
             type: object
         type: object
     served: true
