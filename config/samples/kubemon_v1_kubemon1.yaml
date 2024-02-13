@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/part-of: kubemon
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: kubemon
-  name: kubemon-sample
+  name: kubemon-sample1
 spec:
   species: test
   level: 1

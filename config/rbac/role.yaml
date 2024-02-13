@@ -7,6 +7,32 @@ rules:
 - apiGroups:
   - kubemon.memetoasty.github.com
   resources:
+  - fights
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
+  - fights/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
+  - fights/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - kubemon.memetoasty.github.com
+  resources:
   - kubemons
   verbs:
   - create

@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - kubemon_v1_kubemon.yaml
+- kubemon_v1_fight.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

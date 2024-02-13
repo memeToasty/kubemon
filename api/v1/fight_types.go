@@ -23,48 +23,43 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// KubeMonSpec defines the desired state of KubeMon
-type KubeMonSpec struct {
+// FightSpec defines the desired state of Fight
+type FightSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Species string `json:"species"`
-	// +kubebuilder:validation:Minimum:1
-	// +kubebuilder:validation:Minimum:99
-	Level *int32 `json:"level"`
-	Owner string `json:"owner,omitempty"`
-	// +kubebuilder:validation:Enum:heal,attack
-	Action string `json:"action,omitempty"`
+	// +kubebuilder:validation:Required
+	KubeMon1 string `json:"kubemon1"`
+	// +kubebuilder:validation:Required
+	KubeMon2 string `json:"kubemon2"`
 }
 
-// KubeMonStatus defines the observed state of KubeMon
-type KubeMonStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	HP *int32 `json:"hp,omitempty"`
+// FightStatus defines the observed state of Fight
+type FightStatus struct {
+	LastMessage string `json:"lastMessage"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// KubeMon is the Schema for the kubemons API
-type KubeMon struct {
+// Fight is the Schema for the fights API
+type Fight struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KubeMonSpec   `json:"spec,omitempty"`
-	Status KubeMonStatus `json:"status,omitempty"`
+	Spec   FightSpec   `json:"spec,omitempty"`
+	Status FightStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// KubeMonList contains a list of KubeMon
-type KubeMonList struct {
+// FightList contains a list of Fight
+type FightList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []KubeMon `json:"items"`
+	Items           []Fight `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&KubeMon{}, &KubeMonList{})
+	SchemeBuilder.Register(&Fight{}, &FightList{})
 }

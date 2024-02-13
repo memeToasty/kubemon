@@ -1,0 +1,13 @@
+apiVersion: kubemon.memetoasty.github.com/v1
+kind: Fight
+metadata:
+  labels:
+    app.kubernetes.io/name: fight
+    app.kubernetes.io/instance: fight-sample
+    app.kubernetes.io/part-of: kubemon
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: kubemon
+  name: fight-sample
+spec:
+  kubemon1: kubemon-sample1
+  kubemon2: kubemon-sample2

@@ -52,6 +52,26 @@ func (r *KubeMonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		log.V(1).Info("KubeMon does not have any health")
 
 		kubemon.Status.HP = ptr.To(int32(0))
+		if err := r.Status().Update(ctx, &kubemon); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+	}
+
+	if kubemon.Spec.Action == "heal" {
+		kubemon.Status.HP = ptr.To(*kubemon.Status.HP + 10)
+		if err := r.Status().Update(ctx, &kubemon); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+		kubemon.Spec.Action = ""
+		if err := r.Update(ctx, &kubemon); err != nil {
+			log.Error(err, "Could not update KubeMon object")
+
+			return ctrl.Result{}, err
+		}
 	}
 
 	if err := r.Status().Update(ctx, &kubemon); err != nil {
