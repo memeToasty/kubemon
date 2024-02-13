@@ -41,6 +41,8 @@ type FightStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="KubeMon 1",type="string",JSONPath=".spec.kubemon1"
+//+kubebuilder:printcolumn:name="KubeMon 2",type="string",JSONPath=".spec.kubemon2"
 
 // Fight is the Schema for the fights API
 type Fight struct {

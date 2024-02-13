@@ -14,7 +14,17 @@ spec:
     singular: kubemon
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.species
+      name: Species
+      type: string
+    - jsonPath: .spec.level
+      name: Level
+      type: integer
+    - jsonPath: .status.hp
+      name: HP
+      type: integer
+    name: v1
     schema:
       openAPIV3Schema:
         description: KubeMon is the Schema for the kubemons API

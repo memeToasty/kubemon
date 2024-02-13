@@ -46,6 +46,9 @@ type KubeMonStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Species",type="string",JSONPath=".spec.species"
+//+kubebuilder:printcolumn:name="Level",type="integer",JSONPath=".spec.level"
+//+kubebuilder:printcolumn:name="HP",type="integer",JSONPath=".status.hp"
 
 // KubeMon is the Schema for the kubemons API
 type KubeMon struct {

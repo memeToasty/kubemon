@@ -22,6 +22,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -42,6 +43,7 @@ var (
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=fights,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=fights/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=fights/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=kubemons,verbs=get;list;watch;create;update;patch;delete
 
 func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
@@ -92,6 +94,38 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			}
 		}
 		return ctrl.Result{}, err
+	}
+
+	// Both KubeMons exist
+
+	if *mon1.Status.HP == 0 {
+		mon2.Spec.Level = ptr.To(int32(*mon2.Spec.Level + 1))
+		if err := r.Update(ctx, &mon1); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+
+		if err := r.Delete(ctx, &fight); err != nil {
+			log.Error(err, "Could not delete Fight")
+
+			return ctrl.Result{}, err
+		}
+	}
+
+	if *mon2.Status.HP == 0 {
+		mon1.Spec.Level = ptr.To(int32(*mon1.Spec.Level + 1))
+		if err := r.Update(ctx, &mon2); err != nil {
+			log.Error(err, "Could not update status of KubeMon")
+
+			return ctrl.Result{}, err
+		}
+
+		if err := r.Delete(ctx, &fight); err != nil {
+			log.Error(err, "Could not delete Fight")
+
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
