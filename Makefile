@@ -156,6 +156,16 @@ bad: uninstall undeploy
 	make install IMG=${IMG}
 	make deploy IMG=${IMG}
 
+## Usage commands
+.PHONY: spawn
+spawn:
+	kubectl apply -f config/samples/kubemon_v1_kubemon1.yaml
+	kubectl apply -f config/samples/kubemon_v1_kubemon2.yaml
+
+.PHONY: spawn
+fight:
+	kubectl apply -f config/samples/kubemon_v1_fight.yaml
+
 ##@ Dependencies
 
 ## Location to install dependencies to

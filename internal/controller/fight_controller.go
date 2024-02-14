@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -54,9 +53,7 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	var fight kubemonv1.Fight
 	if err := r.Get(ctx, req.NamespacedName, &fight); err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			log.Error(err, "Unable to fetch Fight")
-		}
+		log.Error(err, "Unable to fetch Fight")
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -98,7 +95,7 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	if err := r.Get(ctx, mon2Name, &mon2); err != nil {
-		log.Error(err, "Unable to fetch KubeMon1")
+		log.Error(err, "Unable to fetch KubeMon2")
 
 		if client.IgnoreNotFound(err) == nil {
 			fight.Status.LastMessage = fmt.Sprintf(FightMessageMonNotFound, mon2Name)
@@ -178,7 +175,7 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	log.Info("Got through reconcile! requeuing")
-	return ctrl.Result{RequeueAfter: time.Second * 20}, nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
