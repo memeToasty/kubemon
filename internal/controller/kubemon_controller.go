@@ -40,10 +40,6 @@ var (
 	ErrKubeMonGone = errors.New("kubeMon is marked for deletion")
 )
 
-const (
-	ActionKubeMonHeal = "heal"
-)
-
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=kubemons,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=kubemons/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kubemon.memetoasty.github.com,resources=kubemons/finalizers,verbs=update
@@ -51,7 +47,7 @@ const (
 func (r *KubeMonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	kubemon, err := r.getKubeMon(ctx, req.NamespacedName)
+	mon, err := r.getKubeMon(ctx, req.NamespacedName)
 	if err != nil {
 		if err == ErrKubeMonGone {
 			log.Info("KubeMon is marked for deletion, stop reconciling")
@@ -66,12 +62,12 @@ func (r *KubeMonReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	log.Info("Got KubeMon object")
 
-	if kubemon.GetAction() == ActionKubeMonHeal {
-		if err := kubemon.AddHealth(10); err != nil {
+	if mon.GetAction() == kubemon.KubeMonActionHeal {
+		if err := mon.AddHealth(10); err != nil {
 			return ctrl.Result{}, err
 		}
 
-		if err := kubemon.ResetAction(); err != nil {
+		if err := mon.ResetAction(); err != nil {
 			return ctrl.Result{}, err
 		}
 	}

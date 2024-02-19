@@ -49,8 +49,6 @@ spec:
           spec:
             description: KubeMonSpec defines the desired state of KubeMon
             properties:
-              action:
-                type: string
               owner:
                 type: string
               species:
