@@ -19,16 +19,16 @@ package controller
 import (
 	"context"
 	"fmt"
-	"math"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kubemonv1 "github.com/memeToasty/kubemon/api/v1"
+
+	kubemon "github.com/memeToasty/kubemon/internal/kubemon"
 )
 
 // FightReconciler reconciles a Fight object
@@ -53,7 +53,9 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	var fight kubemonv1.Fight
 	if err := r.Get(ctx, req.NamespacedName, &fight); err != nil {
-		log.Error(err, "Unable to fetch Fight")
+		if client.IgnoreNotFound(err) == nil {
+			log.Info("Could not find Fight")
+		}
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -68,9 +70,6 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	fightNamespace := fight.Namespace
 
-	var mon1 kubemonv1.KubeMon
-	var mon2 kubemonv1.KubeMon
-
 	mon1Name := types.NamespacedName{
 		Namespace: fightNamespace,
 		Name:      fight.Spec.KubeMon1,
@@ -81,62 +80,50 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		Name:      fight.Spec.KubeMon2,
 	}
 
-	if err := r.Get(ctx, mon1Name, &mon1); err != nil {
-		log.Error(err, "Unable to fetch KubeMon1")
-
+	mon1, err := r.getKubeMon(ctx, mon1Name)
+	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			fight.Status.LastMessage = fmt.Sprintf(FightMessageMonNotFound, mon1Name)
-
-			if err := r.Status().Update(ctx, &fight); err != nil {
-				log.Error(err, "Could not update Fight status")
+			if err := r.updateStatusMessage(ctx, &fight, fmt.Sprintf(FightMessageMonNotFound, mon1Name)); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	if err := r.Get(ctx, mon2Name, &mon2); err != nil {
-		log.Error(err, "Unable to fetch KubeMon2")
-
+	mon2, err := r.getKubeMon(ctx, mon2Name)
+	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
-			fight.Status.LastMessage = fmt.Sprintf(FightMessageMonNotFound, mon2Name)
-
-			if err := r.Status().Update(ctx, &fight); err != nil {
-				log.Error(err, "Could not update Fight status")
+			if err := r.updateStatusMessage(ctx, &fight, fmt.Sprintf(FightMessageMonNotFound, mon2Name)); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	// Both KubeMons exist
 
-	if *mon1.Status.HP == 0 {
-		mon2.Status.Level = ptr.To(int32(*mon2.Status.Level + 1))
-		if err := r.Status().Update(ctx, &mon2); err != nil {
-			log.Error(err, "Could not update status of KubeMon")
-
+	// Death logic
+	if mon1.IsDead() {
+		if err := mon2.LevelUp(); err != nil {
+			log.Error(err, "Could not level up KubeMon", "KubeMon", mon2.Name())
 			return ctrl.Result{}, err
 		}
 
 		if err := r.Delete(ctx, &fight); err != nil {
 			log.Error(err, "Could not delete Fight")
-
 			return ctrl.Result{}, err
 		}
 
 		return ctrl.Result{}, nil
 	}
 
-	if *mon2.Status.HP == 0 {
-		mon1.Status.Level = ptr.To(int32(*mon1.Status.Level + 1))
-		if err := r.Status().Update(ctx, &mon1); err != nil {
-			log.Error(err, "Could not update status of KubeMon")
-
+	if mon2.IsDead() {
+		if err := mon1.LevelUp(); err != nil {
+			log.Error(err, "Could not level up KubeMon", "KubeMon", mon1.Name())
 			return ctrl.Result{}, err
 		}
 
 		if err := r.Delete(ctx, &fight); err != nil {
 			log.Error(err, "Could not delete Fight")
-
 			return ctrl.Result{}, err
 		}
 
@@ -144,20 +131,13 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	if fight.Status.NextMon == 1 {
-		// Mon1 attacks
-		mon2.Status.HP = ptr.To(int32(math.Max(0, float64(*mon2.Status.HP-mon1.Spec.Strength))))
-		if err := r.Status().Update(ctx, &mon2); err != nil {
-			log.Error(err, "Could not update status of KubeMon")
-
+		if err := mon1.Attack(mon2); err != nil {
+			log.Error(err, "Could not execute attack", "Attacker", mon1.Name(), "Defender", mon2.Name())
 			return ctrl.Result{}, err
 		}
-
 	} else {
-		// Mon2 attacks
-		mon1.Status.HP = ptr.To(int32(math.Max(0, float64(*mon1.Status.HP-mon2.Spec.Strength))))
-		if err := r.Status().Update(ctx, &mon1); err != nil {
-			log.Error(err, "Could not update status of KubeMon")
-
+		if err := mon2.Attack(mon1); err != nil {
+			log.Error(err, "Could not execute attack", "Attacker", mon2.Name(), "Defender", mon1.Name())
 			return ctrl.Result{}, err
 		}
 	}
@@ -176,6 +156,28 @@ func (r *FightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	log.Info("Got through reconcile! requeuing")
 	return ctrl.Result{Requeue: true}, nil
+}
+
+func (r *FightReconciler) getKubeMon(ctx context.Context, name types.NamespacedName) (*kubemon.KubeMon, error) {
+	apiMon := &kubemonv1.KubeMon{}
+	if err := r.Get(ctx, name, apiMon); err != nil {
+		return nil, err
+	}
+	mon, err := kubemon.New(ctx, r.Client, r.Status(), apiMon)
+	if err != nil {
+		return nil, err
+	}
+	return mon, nil
+}
+
+func (r *FightReconciler) updateStatusMessage(ctx context.Context, fight *kubemonv1.Fight, message string) error {
+	fight.Status.LastMessage = message
+
+	if err := r.Status().Update(ctx, fight); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
