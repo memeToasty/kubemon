@@ -1,5 +1,5 @@
 # KubeMon
-KubeMon is a ~somewhat~ Kubernetes native-ish game, which is entirely played by interacting through the Kubernetes API
+KubeMon is a _somewhat_ Kubernetes native-ish game, which is entirely played by interacting through the Kubernetes API
 ## Features
 - [x] KubeMon creatures
   - [x] interactive
