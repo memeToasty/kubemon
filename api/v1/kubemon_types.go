@@ -32,8 +32,6 @@ type KubeMonSpec struct {
 	Owner   string `json:"owner,omitempty"`
 	//+kubebuilder:validation:default:1
 	Strength int32 `json:"strength"`
-	//+kubebuilder:validation:Enum:heal,attack
-	Action string `json:"action,omitempty"`
 }
 
 // KubeMonStatus defines the observed state of KubeMon

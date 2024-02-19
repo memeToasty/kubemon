@@ -16,6 +16,11 @@ type KubeMon struct {
 	apiKubeMon *kubemonv1.KubeMon
 }
 
+const (
+	KubeMonActionAnnotation = "KubeMon/action"
+	KubeMonActionHeal       = "heal"
+)
+
 func New(ctx context.Context, c client.Client, sc client.SubResourceWriter, apiKubeMon *kubemonv1.KubeMon) (*KubeMon, error) {
 	k := KubeMon{}
 
@@ -51,11 +56,11 @@ func (k *KubeMon) Name() string {
 }
 
 func (k *KubeMon) GetAction() string {
-	return k.apiKubeMon.Spec.Action
+	return k.apiKubeMon.Annotations[KubeMonActionAnnotation]
 }
 
 func (k *KubeMon) ResetAction() error {
-	k.apiKubeMon.Spec.Action = ""
+	delete(k.apiKubeMon.Annotations, KubeMonActionAnnotation)
 	if err := k.update(); err != nil {
 		return err
 	}
